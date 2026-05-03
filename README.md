@@ -1,20 +1,20 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Warp Racer
 
-# Run and deploy your AI Studio app
+An immersive web3 racing game built on Base. Connect your Base Account via Coinbase Wallet, submit a transaction, and dive into the Warp Race!
 
-This contains everything you need to run your app locally.
+## Overview
+This application implements:
+- Base ecosystem connection via Wagmi + Viem.
+- EOA connection leveraging **Coinbase Wallet** specifically as the Base Account entry point.
+- Single and Batch mode transactions leveraging EIP-5792.
+- Interactive HTML5 Canvas racing game launched upon successful transaction attribution.
 
-View your app in AI Studio: https://ai.studio/apps/d3692921-5d16-45ee-97ec-d5a340fba2c4
+**Note:** The native Base Account integrations/smart wallet specific account abstractions and advanced sponsor functions are strictly available via the Coinbase Wallet connector. Full `@base-org/account` integration is currently considered **NOT ACTIVE** / still in development phase structurally in this snippet, hence "Base Account" (as a standalone explicit feature outside the wallet) is not fully active, relying securely on standard Coinbase Smart Wallet connections instead.
 
-## Run Locally
+## Running the App
+```bash
+npm run dev
+```
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Security
+No sensitive information, API keys, or raw builder codes are stored openly on the frontend UI interface.

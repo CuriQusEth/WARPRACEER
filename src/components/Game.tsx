@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Zap } from 'lucide-react';
+import { Trophy, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Transactions } from './Transactions';
 
 export function Game() {
@@ -9,6 +9,8 @@ export function Game() {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const requestRef = useRef<number>();
+  const [touchLeft, setTouchLeft] = useState(false);
+  const [touchRight, setTouchRight] = useState(false);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -20,48 +22,111 @@ export function Game() {
 
     let playerX = canvas.width / 2;
     const playerY = canvas.height - 40;
-    const playerWidth = 20;
-    const playerHeight = 30;
+    const playerWidth = 24;
+    const playerHeight = 36;
 
-    let obstacles: { x: number; y: number; width: number; height: number; speed: number }[] = [];
+    let obstacles: { x: number; y: number; width: number; height: number; speed: number; color: string }[] = [];
+    let stars: { x: number; y: number; z: number }[] = Array.from({ length: 150 }).map(() => ({
+      x: (Math.random() - 0.5) * canvas.width * 2,
+      y: (Math.random() - 0.5) * canvas.height * 2,
+      z: Math.random() * 2,
+    }));
+    
     let currentScore = 0;
     let frameCount = 0;
+    let speedMultiplier = 1;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') playerX -= 25;
-      if (e.key === 'ArrowRight') playerX += 25;
-      playerX = Math.max(0, Math.min(canvas.width - playerWidth, playerX));
+      if (e.key === 'ArrowLeft') playerX -= 30;
+      if (e.key === 'ArrowRight') playerX += 30;
     };
 
     window.addEventListener('keydown', handleKeyDown);
 
     const update = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Touch controls handling
+      if (touchLeft) playerX -= 5;
+      if (touchRight) playerX += 5;
+      
+      // Clamp player position
+      playerX = Math.max(10, Math.min(canvas.width - playerWidth - 10, playerX));
 
-      // Draw grid effect
-      ctx.strokeStyle = 'rgba(0, 82, 255, 0.2)';
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.4)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Warp Stars
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      ctx.fillStyle = 'white';
+      for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
+        star.z -= 0.05 * speedMultiplier;
+        if (star.z <= 0) {
+          star.x = (Math.random() - 0.5) * canvas.width * 2;
+          star.y = (Math.random() - 0.5) * canvas.height * 2;
+          star.z = 2; 
+        }
+
+        const x = (star.x / star.z) + centerX;
+        const y = (star.y / star.z) + centerY;
+        const size = Math.max(0.1, 1.5 - star.z);
+
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y - (10 * speedMultiplier) * size);
+        ctx.stroke();
+      }
+
+      // Draw Grid / Ground effect
+      ctx.strokeStyle = 'rgba(0, 82, 255, 0.1)';
       ctx.beginPath();
-      for (let i = 0; i < canvas.height; i += 20) {
-        ctx.moveTo(0, (i + frameCount) % canvas.height);
-        ctx.lineTo(canvas.width, (i + frameCount) % canvas.height);
+      for (let i = 0; i < canvas.height; i += Math.max(20, 20 * speedMultiplier)) {
+        ctx.moveTo(0, (i + frameCount * speedMultiplier * 2) % canvas.height);
+        ctx.lineTo(canvas.width, (i + frameCount * speedMultiplier * 2) % canvas.height);
       }
       ctx.stroke();
 
-      // Draw player
+      // Draw Player Ship
       ctx.fillStyle = '#0052FF';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 15;
       ctx.shadowColor = '#0052FF';
-      ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
+      ctx.beginPath();
+      ctx.moveTo(playerX + playerWidth / 2, playerY);
+      ctx.lineTo(playerX + playerWidth, playerY + playerHeight);
+      ctx.lineTo(playerX + playerWidth / 2, playerY + playerHeight - 10);
+      ctx.lineTo(playerX, playerY + playerHeight);
+      ctx.closePath();
+      ctx.fill();
       ctx.shadowBlur = 0;
 
+      // Engine Flame
+      ctx.fillStyle = (frameCount % 4 < 2) ? '#ef4444' : '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(playerX + playerWidth / 2 - 5, playerY + playerHeight - 8);
+      ctx.lineTo(playerX + playerWidth / 2 + 5, playerY + playerHeight - 8);
+      ctx.lineTo(playerX + playerWidth / 2, playerY + playerHeight + 10 * speedMultiplier);
+      ctx.fill();
+
+      // Increased Difficulty
+      speedMultiplier = 1 + (currentScore / 1000);
+      const spawnRate = Math.max(20, 60 - Math.floor(currentScore / 50));
+
       // Obstacles
-      if (frameCount % 60 === 0) {
+      if (frameCount % spawnRate === 0) {
+        const isEnergy = Math.random() > 0.8;
         obstacles.push({
-          x: Math.random() * (canvas.width - 20),
-          y: -20,
-          width: 20 + Math.random() * 30,
-          height: 20,
-          speed: 3 + Math.random() * 3,
+          x: Math.random() * (canvas.width - 30),
+          y: -30,
+          width: 30,
+          height: 30,
+          speed: (3 + Math.random() * 3) * speedMultiplier,
+          color: isEnergy ? '#10b981' : '#ef4444' // Green points or red obstacles
         });
       }
 
@@ -69,22 +134,36 @@ export function Game() {
         const obs = obstacles[i];
         obs.y += obs.speed;
         
-        ctx.fillStyle = '#ef4444';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#ef4444';
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        ctx.fillStyle = obs.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = obs.color;
+        
+        ctx.save();
+        ctx.translate(obs.x + obs.width / 2, obs.y + obs.height / 2);
+        ctx.rotate(frameCount * 0.05);
+        ctx.fillRect(-obs.width / 2, -obs.height / 2, obs.width, obs.height);
+        
+        // Add neon inner glow
+        ctx.fillStyle = '#111';
+        ctx.fillRect(-obs.width / 2 + 4, -obs.height / 2 + 4, obs.width - 8, obs.height - 8);
+        ctx.restore();
+        
         ctx.shadowBlur = 0;
 
-        // Collision
-        if (
-          playerX < obs.x + obs.width &&
-          playerX + playerWidth > obs.x &&
-          playerY < obs.y + obs.height &&
-          playerY + playerHeight > obs.y
-        ) {
-          setGameOver(true);
-          setIsPlaying(false);
-          setScore(currentScore);
+        // Collision Check (circle abstraction for better feel)
+        const dx = (playerX + playerWidth / 2) - (obs.x + obs.width / 2);
+        const dy = (playerY + playerHeight / 2) - (obs.y + obs.height / 2);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < (playerWidth / 2 + obs.width / 2 - 5)) {
+          if (obs.color === '#10b981') {
+            currentScore += 50; // Bonus points
+            obs.y = canvas.height + 100; // remove from screen
+          } else {
+            setGameOver(true);
+            setIsPlaying(false);
+            setScore(currentScore);
+          }
         }
       }
 
@@ -104,13 +183,12 @@ export function Game() {
       window.removeEventListener('keydown', handleKeyDown);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isPlaying, gameOver]);
+  }, [isPlaying, gameOver, touchLeft, touchRight]);
 
   return (
     <div className="flex flex-col items-center w-full">
       {!isPlaying && !gameOver ? (
         <div className="text-center w-full">
-          <p className="text-white/60 mb-8 max-w-sm mx-auto text-sm">Use Right & Left arrow keys to dodge incoming obstacles.</p>
           <Transactions onTxSuccess={() => {
               setIsPlaying(true);
               setGameOver(false);
@@ -118,40 +196,75 @@ export function Game() {
           }} />
         </div>
       ) : (
-        <div className="flex flex-col items-center w-full">
+        <div className="flex flex-col items-center w-full relative">
           <div className="flex justify-between items-center w-full mb-4 px-4">
-            <span className="text-[#0052FF] font-mono text-xl tracking-widest font-bold">SCORE: {score}</span>
+            <span className="text-[#0052FF] font-mono text-xl tracking-widest font-black shadow-sm">SCORE: {score}</span>
             {gameOver && <span className="text-red-500 font-bold uppercase tracking-widest animate-pulse">CRASHED!</span>}
           </div>
           
-          <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(0,82,255,0.1)] relative">
+          <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,82,255,0.15)] relative w-full aspect-[2/1] max-h-[400px]">
             <canvas 
               ref={canvasRef} 
-              width={600} 
-              height={300} 
-              className="block bg-black w-full"
+              width={800} 
+              height={400} 
+              className="block bg-black w-full h-full object-cover"
             />
             
+            {/* Mobile Touch Overlays */}
+            {isPlaying && (
+              <div className="absolute top-0 bottom-0 left-0 w-1/2 flex items-center justify-start p-4 opacity-50 sm:hidden z-10"
+                onTouchStart={() => setTouchLeft(true)}
+                onTouchEnd={() => setTouchLeft(false)}
+                onMouseDown={() => setTouchLeft(true)}
+                onMouseUp={() => setTouchLeft(false)}
+                onMouseLeave={() => setTouchLeft(false)}
+              >
+                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
+                  <ChevronLeft className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            )}
+            {isPlaying && (
+              <div className="absolute top-0 bottom-0 right-0 w-1/2 flex items-center justify-end p-4 opacity-50 sm:hidden z-10"
+                onTouchStart={() => setTouchRight(true)}
+                onTouchEnd={() => setTouchRight(false)}
+                onMouseDown={() => setTouchRight(true)}
+                onMouseUp={() => setTouchRight(false)}
+                onMouseLeave={() => setTouchRight(false)}
+              >
+                <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
+                  <ChevronRight className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            )}
+            
             {gameOver && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center flex-col">
-                <Trophy className="w-16 h-16 text-yellow-400 mb-4" />
-                <h3 className="text-3xl font-black italic text-white mb-2">RACE OVER</h3>
-                <p className="text-white/60 mb-6 uppercase tracking-widest">Final Score: {score}</p>
+              <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center flex-col z-20">
+                <Trophy className="w-20 h-20 text-yellow-500 mb-6 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]" />
+                <h3 className="text-4xl font-black italic text-white mb-2 tracking-tighter">RACE OVER</h3>
+                <p className="text-[#0052FF] mb-8 font-mono text-xl tracking-widest">Final Score: {score}</p>
                 <button
                   onClick={() => {
                     setGameOver(false);
                     setIsPlaying(false);
                     setScore(0);
                   }}
-                  className="px-8 py-3 bg-[#0052FF] text-white rounded-full font-bold text-sm tracking-widest border border-white/20 hover:bg-[#0052FF]/80 transition-colors"
+                  className="px-10 py-4 bg-[#0052FF] text-white rounded-full font-bold text-sm tracking-widest border border-[#0052FF] drop-shadow-[0_0_20px_rgba(0,82,255,0.4)] hover:scale-105 hover:bg-[#0052FF] transition-all"
                 >
                   RACE AGAIN
                 </button>
               </div>
             )}
           </div>
+          
+          {isPlaying && (
+             <div className="mt-6 text-white/50 text-xs text-center font-mono max-w-sm hidden sm:block">
+               Use <span className="text-white">←</span> and <span className="text-white">→</span> keys to dodge red obstacles. Collect green energy for bonus score!
+             </div>
+          )}
         </div>
       )}
     </div>
   );
 }
+

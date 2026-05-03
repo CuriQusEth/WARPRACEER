@@ -7,6 +7,7 @@ import { injected, coinbaseWallet } from 'wagmi/connectors';
 export const config = createConfig({
   chains: [base, baseSepolia],
   connectors: [
+    injected(),
     coinbaseWallet({ appName: 'Warp Racer', preference: 'all' }),
   ],
   transports: {

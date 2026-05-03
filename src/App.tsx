@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount, useDisconnect, useSignMessage } from 'wagmi';
-import { Rocket, Trophy, Gamepad2, ShieldAlert, LogOut, Wallet, ChevronRight } from 'lucide-react';
+import { useAccount, useDisconnect, useSendTransaction } from 'wagmi';
+import { parseEther, type Hex } from 'viem';
+import { Rocket, Trophy, Gamepad2, ShieldAlert, LogOut, Wallet, ChevronRight, Fingerprint } from 'lucide-react';
 import { WalletConnector } from './components/WalletConnector';
 import { Game } from './components/Game';
 import { motion } from 'motion/react';
+import { ENCODED_BUILDER_CODE } from './components/Transactions';
 
 export default function App() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { signMessageAsync } = useSignMessage();
+  const { sendTransactionAsync } = useSendTransaction();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
@@ -18,25 +20,19 @@ export default function App() {
     }
   }, [isConnected]);
 
-  const handleSiweLogin = async () => {
+  const handleLogin = async () => {
     if (!address) return;
     try {
       setIsAuthenticating(true);
-      const message = `Welcome to Warp Racer on Base!
-      
-Sign this message to authenticate your wallet to our secure servers.
-This action will not cost any gas fees.
-
-Wallet address:
-${address}
-
-Nonce:
-${Math.random().toString(36).substring(2, 10)}`;
-      
-      await signMessageAsync({ message, account: address as any });
+      // Authentication through on-chain transaction with ERC-8021 Attribution Suffix
+      await sendTransactionAsync({
+        to: address,
+        value: parseEther("0"),
+        data: ENCODED_BUILDER_CODE as Hex
+      });
       setIsAuthenticated(true);
     } catch (error) {
-      console.error("SIWE Failed:", error);
+      console.error("ERC-8021 Login Failed:", error);
     } finally {
       setIsAuthenticating(false);
     }
@@ -119,15 +115,16 @@ ${Math.random().toString(36).substring(2, 10)}`;
                       </div>
                       <div>
                         <h3 className="text-xl font-semibold mb-2">Secure Authentication Required</h3>
-                        <p className="text-white/60 mb-6 font-mono text-sm">Sign a message to verify wallet ownership and access the circuit.</p>
+                        <p className="text-white/60 mb-6 font-mono text-sm">Send a zero-cost transaction with an ERC-8021 valid builder code to authenticate your wallet on-chain.</p>
                         <button
-                          onClick={handleSiweLogin}
+                          onClick={handleLogin}
                           disabled={isAuthenticating}
                           className="group relative inline-block"
                         >
-                          <div className="absolute inset-0 bg-amber-500 rounded-full blur-xl opacity-40 group-hover:opacity-80 transition-opacity" />
-                          <div className="relative px-8 py-3 bg-amber-500 text-black rounded-full font-bold text-sm tracking-widest flex items-center space-x-3 border border-amber-300">
-                            <span>{isAuthenticating ? 'SIGNING...' : 'SIGN IN WITH ETHEREUM'}</span>
+                          <div className="absolute inset-0 bg-blue-600 rounded-full blur-xl opacity-40 group-hover:opacity-80 transition-opacity" />
+                          <div className="relative px-8 py-3 bg-[#0052FF] text-white rounded-full font-bold text-sm tracking-widest flex items-center space-x-3 border border-[#0052FF]">
+                            <span>{isAuthenticating ? 'AUTHENTICATING...' : 'LOGIN VIA TXN'}</span>
+                            <Fingerprint className="w-4 h-4 ml-2" />
                             <ChevronRight className="w-4 h-4" />
                           </div>
                         </button>
@@ -163,9 +160,9 @@ ${Math.random().toString(36).substring(2, 10)}`;
                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">
                   <div className="flex flex-col gap-1">
                     <span className="text-white text-sm font-medium">Authentication</span>
-                    <span className="text-white/40 text-[10px] uppercase">SIWE (EIP-4361)</span>
+                    <span className="text-white/40 text-[10px] uppercase">ERC-8021 Login Txn</span>
                   </div>
-                  <ShieldAlert className="w-5 h-5 text-green-400" />
+                  <Fingerprint className="w-5 h-5 text-[#0052FF]" />
                 </div>
 
                 <div className="flex justify-between items-center p-3 rounded-xl bg-white/5 border border-white/5">

@@ -2,15 +2,13 @@ import { useConnect } from 'wagmi';
 
 export function WalletConnector() {
   const { connectors, connect, isPending } = useConnect();
-  
-  // Find the Coinbase Wallet connector to serve as the default "Base Account" connector
-  const baseConnector = connectors.find((c) => c.id === 'coinbaseWalletSDK' || c.name.toLowerCase().includes('coinbase'));
 
   return (
     <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full justify-center">
-      {baseConnector ? (
+      {connectors.map((connector) => (
         <button
-          onClick={() => connect({ connector: baseConnector })}
+          key={connector.id}
+          onClick={() => connect({ connector })}
           disabled={isPending}
           className="group relative flex-1 max-w-[300px]"
         >
@@ -21,12 +19,10 @@ export function WalletConnector() {
               <path d="M100,0 C44.7715,0 0,44.7715 0,100 C0,155.228 44.7715,200 100,200 C155.228,200 200,155.228 200,100 C200,44.7715 155.228,0 100,0 Z" fill="#0052FF"/>
               <circle cx="100" cy="100" r="50" fill="white"/>
             </svg>
-            <span>CONNECT BASE ACCOUNT</span>
+            <span>{connector.name}</span>
           </div>
         </button>
-      ) : (
-        <div className="text-white/60 text-sm">Coinbase Wallet not found.</div>
-      )}
+      ))}
     </div>
   );
 }

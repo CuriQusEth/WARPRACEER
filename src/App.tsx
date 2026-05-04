@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount, useDisconnect, useSendTransaction } from 'wagmi';
-import { parseEther, type Hex } from 'viem';
-import { Rocket, Trophy, Gamepad2, ShieldAlert, LogOut, Wallet, ChevronRight, Fingerprint } from 'lucide-react';
+import { useAccount, useDisconnect, useSendTransaction, useSignMessage } from 'wagmi';
+import { parseEther, type Hex, stringToHex } from 'viem';
+import { Rocket, Trophy, Gamepad2, ShieldAlert, LogOut, Wallet, ChevronRight, Fingerprint, MessageSquare } from 'lucide-react';
 import { WalletConnector } from './components/WalletConnector';
 import { Game } from './components/Game';
 import { motion } from 'motion/react';
-import { ENCODED_BUILDER_CODE } from './components/Transactions';
+import { ATTRIBUTION_CODE, BUILDER_CODE } from './components/Transactions';
+import { appendERC8021 } from './lib/erc8021';
+import { verifyAgentSignature } from './lib/erc8004';
 
 export default function App() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { sendTransactionAsync } = useSendTransaction();
+  const { signMessageAsync } = useSignMessage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [isSayingGM, setIsSayingGM] = useState(false);
 
   useEffect(() => {
     if (!isConnected) {
@@ -24,17 +28,44 @@ export default function App() {
     if (!address) return;
     try {
       setIsAuthenticating(true);
-      // Authentication through on-chain transaction with ERC-8021 Attribution Suffix
-      await sendTransactionAsync({
-        to: address,
-        value: parseEther("0"),
-        data: ENCODED_BUILDER_CODE as Hex
-      });
-      setIsAuthenticated(true);
+      // SIWE signing
+      const message = `Welcome to Warp Racer!
+Click to sign and verify you are the owner of this address to play.
+Wallet: ${address}
+Nonce: ${Math.random().toString(36).substring(2)}`;
+      
+      const signature = await signMessageAsync({ message, account: address as `0x${string}` });
+      
+      if (verifyAgentSignature(address, signature, message)) {
+          // Authentication through on-chain config tx
+          await sendTransactionAsync({
+            to: address,
+            value: parseEther("0"),
+            data: appendERC8021(stringToHex("WARP_RACER_LOGIN"), [ATTRIBUTION_CODE, BUILDER_CODE])
+          });
+          setIsAuthenticated(true);
+      }
     } catch (error) {
-      console.error("ERC-8021 Login Failed:", error);
+      console.error("Login Failed:", error);
     } finally {
       setIsAuthenticating(false);
+    }
+  };
+
+  const handleSayGM = async () => {
+    if (!address) return;
+    try {
+      setIsSayingGM(true);
+      await sendTransactionAsync({
+        to: address, // sending to self as an on-chain memo
+        value: parseEther("0"),
+        data: appendERC8021(stringToHex("GM Base!"), [ATTRIBUTION_CODE, BUILDER_CODE])
+      });
+      alert("GM sent successfully on-chain!");
+    } catch (error) {
+      console.error("Say GM Failed:", error);
+    } finally {
+      setIsSayingGM(false);
     }
   };
 
@@ -85,6 +116,19 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {isAuthenticated && (
+        <div className="absolute top-8 right-8 z-50">
+           <button
+             onClick={handleSayGM}
+             disabled={isSayingGM}
+             className="px-4 py-2 bg-gradient-to-r from-blue-500 to-amber-500 rounded-full font-bold text-xs tracking-wider flex items-center gap-2 hover:scale-105 transition-transform"
+           >
+             <MessageSquare className="w-4 h-4" />
+             {isSayingGM ? "SENDING..." : "SAY GM ON-CHAIN"}
+           </button>
+        </div>
+      )}
 
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         <div className="grid lg:grid-cols-12 gap-8 items-start">

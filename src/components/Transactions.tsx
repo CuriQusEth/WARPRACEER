@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSendTransaction, useAccount, useCapabilities, useSendCalls } from 'wagmi';
-import { parseEther, type Hex } from 'viem';
-import { Loader2, CheckCircle2, Zap } from 'lucide-react';
+import { parseEther, type Hex, toHex, stringToHex } from 'viem';
+import { Loader2, CheckCircle2 } from 'lucide-react';
+import { buildERC8021Suffix, appendERC8021 } from '../lib/erc8021';
 
-export const ENCODED_BUILDER_CODE = "0x62635f70323333787875350b0080218021802180218021802180218021";
+export const ATTRIBUTION_CODE = "WARP_RACER_X";
+export const BUILDER_CODE = "BUILDER_X";
 
 export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
   const { address } = useAccount();
@@ -13,8 +15,8 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
   const { data: capabilities } = useCapabilities();
   const { sendCalls, isPending: isBatchPending, isSuccess: isBatchSuccess } = useSendCalls();
   
-  // Check if wallet supports batching on current chain (Base Sepolia is 84532)
-  const isBatchSupported = capabilities && capabilities[84532]?.auxiliaryFunds?.supported;
+  // Check if wallet supports batching on current chain (Base is 8453)
+  const isBatchSupported = capabilities && capabilities[8453]?.auxiliaryFunds?.supported;
 
   useEffect(() => {
     if (isTxSuccess || isBatchSuccess) {
@@ -25,32 +27,33 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
   }, [isTxSuccess, isBatchSuccess, onTxSuccess]);
 
   const handleSendTransaction = () => {
-    // Example: Sending a dummy transaction with ERC-8021 data suffix embedded
+    const dataSuffix = buildERC8021Suffix([ATTRIBUTION_CODE, BUILDER_CODE]);
     sendTransaction({
       to: address, // sending to self for testing
       value: parseEther("0"),
-      data: ENCODED_BUILDER_CODE as Hex
+      data: appendERC8021(stringToHex("INIT_RACE"), [ATTRIBUTION_CODE, BUILDER_CODE])
     });
   };
 
   const handleBatchTransaction = () => {
     if (!address) return;
     
-    // Example EIP-5792: Sending multiple transactions together with DataSuffixCapability
     sendCalls({
       calls: [
         {
           to: address,
           value: parseEther("0"),
+          data: stringToHex("RACE_TICKET_1")
         },
         {
           to: address,
           value: parseEther("0"),
+          data: stringToHex("RACE_TICKET_2")
         }
       ],
       capabilities: {
         dataSuffix: {
-          value: ENCODED_BUILDER_CODE,
+          value: buildERC8021Suffix([ATTRIBUTION_CODE, BUILDER_CODE]),
           optional: true
         }
       } as any
@@ -59,7 +62,6 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
 
   return (
     <div className="flex flex-col items-center">
-      {/* Action Button - The Batch Tx Core */}
       <button 
         onClick={handleBatchTransaction}
         disabled={isTxPending || isBatchPending || !isBatchSupported}
@@ -96,7 +98,7 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
           <div className="overflow-hidden">
             <p className="text-green-400 font-medium text-sm">Race Initialized!</p>
             <a 
-              href={`https://sepolia.basescan.org/tx/${hash}`} 
+              href={`https://basescan.org/tx/${hash}`} 
               target="_blank" 
               rel="noreferrer"
               className="text-green-500/80 text-xs font-mono hover:underline truncate block w-full mt-1"

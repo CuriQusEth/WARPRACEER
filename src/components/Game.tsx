@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Transactions } from './Transactions';
+import { Trophy, Zap, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Transactions, ATTRIBUTION_CODE, BUILDER_CODE } from './Transactions';
+import { useSendTransaction, useAccount } from 'wagmi';
+import { parseEther, stringToHex } from 'viem';
+import { appendERC8021 } from '../lib/erc8021';
 
 export function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -11,6 +14,24 @@ export function Game() {
   const requestRef = useRef<number>();
   const [touchLeft, setTouchLeft] = useState(false);
   const [touchRight, setTouchRight] = useState(false);
+  
+  const { address } = useAccount();
+  const { sendTransactionAsync, isPending: isSubmitting } = useSendTransaction();
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmitScore = async () => {
+    if (!address) return;
+    try {
+      await sendTransactionAsync({
+        to: address,
+        value: parseEther("0"),
+        data: appendERC8021(stringToHex(`SUBMIT_SCORE:${score}`), [ATTRIBUTION_CODE, BUILDER_CODE])
+      });
+      setIsSubmitted(true);
+    } catch(err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -243,16 +264,32 @@ export function Game() {
                 <Trophy className="w-20 h-20 text-yellow-500 mb-6 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]" />
                 <h3 className="text-4xl font-black italic text-white mb-2 tracking-tighter">RACE OVER</h3>
                 <p className="text-[#0052FF] mb-8 font-mono text-xl tracking-widest">Final Score: {score}</p>
-                <button
-                  onClick={() => {
-                    setGameOver(false);
-                    setIsPlaying(false);
-                    setScore(0);
-                  }}
-                  className="px-10 py-4 bg-[#0052FF] text-white rounded-full font-bold text-sm tracking-widest border border-[#0052FF] drop-shadow-[0_0_20px_rgba(0,82,255,0.4)] hover:scale-105 hover:bg-[#0052FF] transition-all"
-                >
-                  RACE AGAIN
-                </button>
+                <div className="flex flex-col gap-4 w-full max-w-xs">
+                  <button
+                    onClick={() => {
+                      setGameOver(false);
+                      setIsPlaying(false);
+                      setScore(0);
+                      setIsSubmitted(false);
+                    }}
+                    className="px-8 py-3 bg-[#0052FF] text-white rounded-full font-bold text-sm tracking-widest border border-[#0052FF] drop-shadow-[0_0_20px_rgba(0,82,255,0.4)] hover:scale-105 hover:bg-[#0052FF] transition-all"
+                  >
+                    RACE AGAIN
+                  </button>
+                  <button
+                    onClick={handleSubmitScore}
+                    disabled={isSubmitting || isSubmitted || score === 0}
+                    className="px-8 py-3 bg-white/10 text-white rounded-full font-bold text-sm tracking-widest border border-white/20 hover:bg-white/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" /> SUBMITTING...</>
+                    ) : isSubmitted ? (
+                      "SCORE SUBMITTED"
+                    ) : (
+                      "SUBMIT SCORE"
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>

@@ -4,7 +4,7 @@
   "description": "BaseBuilder tracking agent that monitors ERC-8021, ERC-8004, SendGM, Score, and ERC-8257 standards. Automatically signs player information, on-chain activities, and scores using SIWA. Provides fast and reliable racing + tracking experience on the Base network.",
   "image": "https://warpraceer.vercel.app/og-image.png",
   "version": "1.0.0",
-  "endpoints": [
+  "services": [
     {
       "name": "Web",
       "endpoint": "https://warpraceer.vercel.app/",

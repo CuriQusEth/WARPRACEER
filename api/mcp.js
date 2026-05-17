@@ -22,6 +22,34 @@ export default function handler(req, res) {
     const body = req.body || {};
     const { id, method } = body;
 
+    // Handle initialize
+    if (method === 'initialize') {
+      return res.status(200).json({
+        jsonrpc: "2.0",
+        id: id || 1,
+        result: {
+          protocolVersion: "2024-11-05",
+          capabilities: {
+            tools: {},
+            prompts: {}
+          },
+          serverInfo: {
+            name: "Warp Racer MCP",
+            version: "1.0.0"
+          }
+        }
+      });
+    }
+
+    // Send notifications/initialized Response
+    if (method === 'notifications/initialized') {
+      return res.status(200).json({
+        jsonrpc: "2.0",
+        id: id || 1,
+        result: {}
+      });
+    }
+
     // Send tools/list Response
     if (method === 'tools/list') {
       return res.status(200).json({

@@ -22,6 +22,21 @@
       "id": "performance-optimization",
       "name": "Performance Optimization",
       "description": "Analyze and optimize racing performance, timing and strategy in real-time."
+    },
+    {
+      "id": "real-time-automation",
+      "name": "Real-Time Automation",
+      "description": "Real-time automated responses and gameplay actions."
+    },
+    {
+      "id": "competitive-orchestration",
+      "name": "Competitive Orchestration",
+      "description": "Competitive matching and orchestrating leaderboards."
+    },
+    {
+      "id": "ecosystem-coordination",
+      "name": "Ecosystem Coordination",
+      "description": "Coordinate on-chain tasks with other agents and smart contracts."
     }
   ],
   "services": [

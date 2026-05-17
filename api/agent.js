@@ -1,0 +1,16 @@
+export default function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  return res.status(200).json({
+    status: "active",
+    agentName: "Warp Racer AI",
+    network: "Base",
+    version: "1.0.0",
+    message: "A2A Endpoint is live."
+  });
+}

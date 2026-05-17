@@ -1,33 +1,61 @@
 {
-  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "Warp Racer",
-  "description": "BaseBuilder tracking agent that monitors ERC-8021, ERC-8004, SendGM, Score, and ERC-8257 standards. Automatically signs player information, on-chain activities, and scores using SIWA. Provides fast and reliable racing + tracking experience on the Base network.",
-  "image": "https://warpraceer.vercel.app/og-image.png",
+  "description": "High-performance AI Agent specialized in warp racing mechanics, real-time automation, multi-track management, competitive optimization and ecosystem coordination on Base.",
   "version": "1.0.0",
-  "services": [
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "image": "https://warpraceer.vercel.app/og-image.png",
+  "owner": "0x29536d0bc1004ab274c4f0f59734ad74d4559b7b",
+  "agentWallet": "0x29536d0bc1004ab274c4f0f59734ad74d4559b7b",
+  "active": true,
+  "skills": [
     {
-      "name": "Web",
-      "endpoint": "https://warpraceer.vercel.app/",
-      "version": "1.0.0"
+      "id": "warp-racing",
+      "name": "Warp Racing",
+      "description": "Real-time warp racing mechanics, speed optimization and competitive track management."
     },
     {
+      "id": "multi-track-orchestration",
+      "name": "Multi-Track Orchestration",
+      "description": "Manage and synchronize multiple racing instances and tracks simultaneously."
+    },
+    {
+      "id": "performance-optimization",
+      "name": "Performance Optimization",
+      "description": "Analyze and optimize racing performance, timing and strategy in real-time."
+    }
+  ],
+  "services": [
+    {
       "name": "A2A",
-      "endpoint": "https://warpraceer.vercel.app/.well-known/agent-card.json",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "endpoint": "https://warpraceer.vercel.app/.well-known/agent-card.json"
+    },
+    {
+      "name": "MCP",
+      "version": "1.0.0",
+      "endpoint": "https://warpraceer.vercel.app/api/mcp"
+    },
+    {
+      "name": "API",
+      "version": "1.0.0",
+      "endpoint": "https://warpraceer.vercel.app/api/agent"
     }
   ],
   "capabilities": [
-    "basebuilder-tracking",
-    "onchain-activity-monitoring",
-    "erc8004-registration",
-    "erc8021-support",
-    "erc8257-player-data",
-    "sendgm-integration",
-    "siwa-signing",
-    "score-tracking",
-    "real-time-racing",
-    "onchain-gaming"
+    "warp-racing",
+    "real-time-automation",
+    "multi-track-management",
+    "speed-optimization",
+    "competitive-orchestration",
+    "ecosystem-coordination"
   ],
-  "paymentAddress": "0x29536d0bc1004ab274c4f0f59734ad74d4559b7b",
-  "network": "base"
+  "supportedChains": ["eip155:8453"],
+  "x402Support": false,
+  "registrations": [
+    {
+      "agentId": null,
+      "agentRegistry": "eip155:8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
+    }
+  ],
+  "supportedTrust": ["reputation"]
 }

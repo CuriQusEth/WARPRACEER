@@ -14,7 +14,3 @@ export default async function handler(req, res) {
     message: "A2A Endpoint is live."
   });
 }
-
-export const GET = handler;
-export const OPTIONS = handler;
-

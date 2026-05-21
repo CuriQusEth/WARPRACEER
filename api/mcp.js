@@ -203,8 +203,3 @@ export default async function handler(req, res) {
 
   res.status(405).json({ error: 'Method Not Allowed' });
 }
-
-export const GET = handler;
-export const POST = handler;
-export const OPTIONS = handler;
-

@@ -75,11 +75,7 @@ Nonce: ${Math.random().toString(36).substring(2)}`;
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#0052FF] rounded-full blur-[160px] opacity-20 pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#0052FF] rounded-full blur-[140px] opacity-15 pointer-events-none" />
 
-      {/* App ID Meta Info (Visualized) */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center space-x-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] text-white/40 tracking-widest uppercase z-50">
-        <span>Base App ID: 68f407468c4fe3f562003d8e</span>
-        <span className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
-      </div>
+
 
       <header className="relative z-10 flex flex-col sm:flex-row items-center justify-between px-6 sm:px-8 pt-12 sm:pt-8 pb-4">
         <div className="flex items-center space-x-4 mb-4 sm:mb-0">
@@ -96,10 +92,7 @@ Nonce: ${Math.random().toString(36).substring(2)}`;
         </div>
 
         <div className="flex items-center space-x-3">
-          <div className="hidden sm:flex flex-col items-end mr-4">
-            <span className="text-[10px] text-white/40 uppercase tracking-wider">Attribution Active</span>
-            <span className="text-xs font-mono text-blue-300 italic">***_********</span>
-          </div>
+
           <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl flex items-center space-x-3 shadow-inner">
             <div className={`w-2 h-2 rounded-full ${isAuthenticated ? 'bg-green-400' : isConnected ? 'bg-amber-400' : 'bg-red-400'} animate-pulse`} />
             <span className="text-sm font-medium">

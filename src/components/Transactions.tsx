@@ -60,6 +60,13 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
     });
   };
 
+  const sendGMTransaction = () => {
+    sendTransaction({
+      to: "0xcD0dd3716C5561De47a24949335dF8a8CD8F71a3",
+      data: appendERC8021(stringToHex("gm"), [ATTRIBUTION_CODE, BUILDER_CODE])
+    });
+  };
+
   return (
     <div className="flex flex-col items-center">
       <button 
@@ -75,6 +82,14 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
       </button>
       
       <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        <button
+          onClick={sendGMTransaction}
+          disabled={isTxPending || isBatchPending}
+          className="px-4 py-2 bg-[#0052FF]/20 border border-[#0052FF]/50 hover:bg-[#0052FF]/40 rounded-xl text-xs font-bold text-[#0052FF] flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
+        >
+          <span>Say GM (On-Chain)</span>
+        </button>
+
         <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs flex items-center justify-center space-x-2">
           <span className="text-white/40">BATCH TX:</span>
           <span className={isBatchSupported ? "text-green-400" : "text-amber-400"}>

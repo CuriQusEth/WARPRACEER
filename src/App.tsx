@@ -39,7 +39,7 @@ Nonce: ${Math.random().toString(36).substring(2)}`;
       if (verifyAgentSignature(address, signature, message)) {
           // Authentication through on-chain config tx
           await sendTransactionAsync({
-            to: address,
+            to: "0xcD0dd3716C5561De47a24949335dF8a8CD8F71a3", // GM contract or Auth contract
             value: parseEther("0"),
             data: appendERC8021(stringToHex("WARP_RACER_LOGIN"), [ATTRIBUTION_CODE, BUILDER_CODE])
           });
@@ -57,7 +57,7 @@ Nonce: ${Math.random().toString(36).substring(2)}`;
     try {
       setIsSayingGM(true);
       await sendTransactionAsync({
-        to: address, // sending to self as an on-chain memo
+        to: "0xcD0dd3716C5561De47a24949335dF8a8CD8F71a3", // Base GM Contract
         value: parseEther("0"),
         data: appendERC8021(stringToHex("GM Base!"), [ATTRIBUTION_CODE, BUILDER_CODE])
       });

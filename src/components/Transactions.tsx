@@ -5,7 +5,7 @@ import { Loader2, CheckCircle2 } from 'lucide-react';
 import { buildERC8021Suffix, appendERC8021 } from '../lib/erc8021';
 
 export const ATTRIBUTION_CODE = "WARP_RACER_X";
-export const BUILDER_CODE = "BUILDER_X";
+export const BUILDER_CODE = "bc_p233xxu5";
 
 export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
   const { address } = useAccount();
@@ -15,8 +15,8 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
   const { data: capabilities } = useCapabilities();
   const { sendCalls, isPending: isBatchPending, isSuccess: isBatchSuccess } = useSendCalls();
   
-  // Check if wallet supports batching on current chain (Base is 8453)
-  const isBatchSupported = capabilities && capabilities[8453]?.auxiliaryFunds?.supported;
+  const chainId = 8453; // Base Mainnet
+  const isBatchSupported = capabilities?.[chainId]?.atomic?.status === 'ready' || capabilities?.[chainId]?.atomic?.status === 'supported';
 
   useEffect(() => {
     if (isTxSuccess || isBatchSuccess) {
@@ -29,7 +29,7 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
   const handleSendTransaction = () => {
     const dataSuffix = buildERC8021Suffix([ATTRIBUTION_CODE, BUILDER_CODE]);
     sendTransaction({
-      to: address, // sending to self for testing
+      to: "0x0000000000000000000000000000000000008021",
       value: parseEther("0"),
       data: appendERC8021(stringToHex("INIT_RACE"), [ATTRIBUTION_CODE, BUILDER_CODE])
     });
@@ -41,12 +41,12 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
     sendCalls({
       calls: [
         {
-          to: address,
+          to: "0x0000000000000000000000000000000000008021",
           value: parseEther("0"),
           data: stringToHex("RACE_TICKET_1")
         },
         {
-          to: address,
+          to: "0x0000000000000000000000000000000000008021",
           value: parseEther("0"),
           data: stringToHex("RACE_TICKET_2")
         }

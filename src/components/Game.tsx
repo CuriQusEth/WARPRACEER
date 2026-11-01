@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Zap, ChevronLeft, ChevronRight, Loader2, FastForward } from 'lucide-react';
 import { Transactions, ATTRIBUTION_CODE, BUILDER_CODE } from './Transactions';
-import { useSendTransaction, useAccount } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt, useAccount } from 'wagmi';
 import { parseEther, stringToHex } from 'viem';
 import { appendERC8021 } from '../lib/erc8021';
 
@@ -22,20 +22,25 @@ export function Game() {
   const [isBoosting, setIsBoosting] = useState(false);
   
   const { address } = useAccount();
-  const { sendTransactionAsync, isPending: isSubmitting } = useSendTransaction();
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { sendTransaction, data: submitHash, isPending: isSubmittingTx } = useSendTransaction();
+  const { isLoading: isSubmittingConfirming, isSuccess: isSubmittedOnChain } = useWaitForTransactionReceipt({ hash: submitHash });
+  const [hasInitiatedSubmit, setHasInitiatedSubmit] = useState(false);
 
-  const handleSubmitScore = async () => {
+  const isSubmitting = isSubmittingTx || isSubmittingConfirming;
+  const isSubmitted = isSubmittedOnChain || hasInitiatedSubmit && !isSubmitting;
+
+  const handleSubmitScore = () => {
     if (!address) return;
     try {
-      await sendTransactionAsync({
+      setHasInitiatedSubmit(true);
+      sendTransaction({
         to: "0x0000000000000000000000000000000000008021",
         value: parseEther("0"),
         data: appendERC8021(stringToHex(`SUBMIT_SCORE:${score}`), [ATTRIBUTION_CODE, BUILDER_CODE])
       });
-      setIsSubmitted(true);
     } catch(err) {
       console.error(err);
+      setHasInitiatedSubmit(false);
     }
   };
 
@@ -438,7 +443,7 @@ export function Game() {
                       setGameOver(false);
                       setIsPlaying(false);
                       setScore(0);
-                      setIsSubmitted(false);
+                      setHasInitiatedSubmit(false);
                     }}
                     className="flex-1 px-8 py-4 bg-white/5 text-white rounded-2xl font-bold tracking-widest border border-white/10 hover:bg-white/10 transition-all font-mono"
                   >

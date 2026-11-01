@@ -4,8 +4,19 @@ import { WagmiProvider, createConfig, http } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
 import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors';
 
+// Base Denim upgrade: 200ms native canonical blocks replacing Flashblocks
+const baseDenim = {
+  ...base,
+  pollingInterval: 250, // Tuned for 200ms native blocks
+};
+
+const baseSepoliaDenim = {
+  ...baseSepolia,
+  pollingInterval: 250,
+};
+
 export const config = createConfig({
-  chains: [base, baseSepolia],
+  chains: [baseDenim, baseSepoliaDenim],
   multiInjectedProviderDiscovery: false,
   connectors: [
     injected({ target: 'metaMask' }),
@@ -13,13 +24,21 @@ export const config = createConfig({
     walletConnect({ projectId: 'YOUR_PROJECT_ID_HERE', showQrModal: true })
   ],
   transports: {
-    [base.id]: http(),
-    [baseSepolia.id]: http(),
+    [baseDenim.id]: http(undefined, { batch: true }),
+    [baseSepoliaDenim.id]: http(undefined, { batch: true }),
   },
 });
 
 export function Providers({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        // Fast canonical state updates for 200ms block times
+        refetchOnWindowFocus: false,
+        staleTime: 500,
+      },
+    },
+  }));
 
   return (
     <WagmiProvider config={config}>

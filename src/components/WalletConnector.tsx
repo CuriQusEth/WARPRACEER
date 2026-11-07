@@ -8,7 +8,7 @@ export function WalletConnector() {
       {connectors.map((connector) => (
         <button
           key={connector.id}
-          onClick={() => connect({ connector })}
+          onClick={() => connect({ connector, chainId: 8453 })}
           disabled={isPending}
           className="group relative flex-1 max-w-[300px]"
         >

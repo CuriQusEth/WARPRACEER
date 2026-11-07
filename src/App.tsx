@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount, useDisconnect, useSendTransaction, useSignMessage } from 'wagmi';
+import { useAccount, useDisconnect, useSendTransaction, useSignMessage, useChainId, useSwitchChain } from 'wagmi';
 import { parseEther, type Hex, stringToHex } from 'viem';
-import { Rocket, Trophy, Gamepad2, ShieldAlert, LogOut, Wallet, ChevronRight, Fingerprint, MessageSquare, Zap } from 'lucide-react';
+import { Rocket, Trophy, Gamepad2, ShieldAlert, LogOut, Wallet, ChevronRight, Fingerprint, MessageSquare, Zap, ArrowRightLeft } from 'lucide-react';
 import { WalletConnector } from './components/WalletConnector';
 import { Game } from './components/Game';
 import { motion } from 'motion/react';
@@ -9,14 +9,21 @@ import { ATTRIBUTION_CODE, BUILDER_CODE } from './components/Transactions';
 import { appendERC8021 } from './lib/erc8021';
 import { verifyAgentSignature } from './lib/erc8004';
 
+const BASE_MAINNET_ID = 8453;
+
 export default function App() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const currentChainId = useChainId();
+  const { switchChain, isPending: isSwitchingNetwork } = useSwitchChain();
   const { sendTransactionAsync } = useSendTransaction();
   const { signMessageAsync } = useSignMessage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isSayingGM, setIsSayingGM] = useState(false);
+  const [gmSuccess, setGmSuccess] = useState(false);
+
+  const isWrongChain = isConnected && currentChainId !== BASE_MAINNET_ID;
 
   useEffect(() => {
     if (!isConnected) {
@@ -37,10 +44,11 @@ Nonce: ${Math.random().toString(36).substring(2)}`;
       const signature = await signMessageAsync({ message, account: address as `0x${string}` });
       
       if (verifyAgentSignature(address, signature, message)) {
-          // Authentication through on-chain config tx
+          // Authentication through on-chain config tx on Base Denim Mainnet
           await sendTransactionAsync({
             to: "0xcD0dd3716C5561De47a24949335dF8a8CD8F71a3", // GM contract or Auth contract
             value: parseEther("0"),
+            chainId: BASE_MAINNET_ID,
             data: appendERC8021(stringToHex("WARP_RACER_LOGIN"), [ATTRIBUTION_CODE, BUILDER_CODE])
           });
           setIsAuthenticated(true);
@@ -52,8 +60,6 @@ Nonce: ${Math.random().toString(36).substring(2)}`;
     }
   };
 
-  const [gmSuccess, setGmSuccess] = useState(false);
-
   const handleSayGM = async () => {
     if (!address) return;
     try {
@@ -61,6 +67,7 @@ Nonce: ${Math.random().toString(36).substring(2)}`;
       await sendTransactionAsync({
         to: "0xcD0dd3716C5561De47a24949335dF8a8CD8F71a3", // Base GM Contract
         value: parseEther("0"),
+        chainId: BASE_MAINNET_ID,
         data: appendERC8021(stringToHex("GM Base!"), [ATTRIBUTION_CODE, BUILDER_CODE])
       });
       setGmSuccess(true);
@@ -131,6 +138,28 @@ Nonce: ${Math.random().toString(36).substring(2)}`;
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 rounded-full text-xs font-mono flex items-center gap-2 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-3">
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
           <span>GM transaction broadcast & confirmed in canonical 200ms block!</span>
+        </div>
+      )}
+
+      {isWrongChain && (
+        <div className="relative z-20 max-w-7xl mx-auto px-6 mb-4">
+          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <Zap className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
+              <div>
+                <p className="text-amber-300 font-bold text-xs uppercase tracking-wider">Network Mismatch: Chain #{currentChainId}</p>
+                <p className="text-white/70 text-xs">Switch to Base Denim Mainnet (8453) to race with sub-second 200ms blocks.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => switchChain?.({ chainId: BASE_MAINNET_ID })}
+              disabled={isSwitchingNetwork}
+              className="px-5 py-2.5 bg-[#0052FF] hover:bg-blue-600 text-white rounded-xl text-xs font-bold font-mono tracking-wider flex items-center gap-2 shrink-0 transition-all shadow-[0_0_15px_rgba(0,82,255,0.4)] disabled:opacity-50"
+            >
+              <ArrowRightLeft className="w-3.5 h-3.5" />
+              {isSwitchingNetwork ? 'Switching...' : 'Switch to Base Mainnet'}
+            </button>
+          </div>
         </div>
       )}
 

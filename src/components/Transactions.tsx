@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react';
-import { useSendTransaction, useWaitForTransactionReceipt, useAccount, useCapabilities, useSendCalls, useWaitForCallsStatus } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt, useAccount, useCapabilities, useSendCalls, useWaitForCallsStatus, useChainId, useSwitchChain } from 'wagmi';
 import { parseEther, type Hex, toHex, stringToHex } from 'viem';
-import { Loader2, CheckCircle2, Zap, ShieldCheck } from 'lucide-react';
+import { Loader2, CheckCircle2, Zap, ShieldCheck, ArrowRightLeft } from 'lucide-react';
 import { buildERC8021Suffix, appendERC8021 } from '../lib/erc8021';
 
 export const ATTRIBUTION_CODE = "WARP_RACER_X";
 export const BUILDER_CODE = "bc_p233xxu5";
+export const BASE_MAINNET_ID = 8453;
 
 export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
   const { address } = useAccount();
+  const currentChainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
+
+  const isWrongChain = currentChainId !== BASE_MAINNET_ID;
+
   const { sendTransaction, isPending: isTxPending, data: hash } = useSendTransaction();
   const { isLoading: isTxConfirming, isSuccess: isTxConfirmed, data: receipt } = useWaitForTransactionReceipt({ hash });
   
@@ -19,11 +25,10 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
     id: callsData?.id,
   });
   
-  const chainId = 8453; // Base Mainnet
-  const isBatchSupported = capabilities?.[chainId]?.atomic?.status === 'ready' || capabilities?.[chainId]?.atomic?.status === 'supported';
+  const isBatchSupported = capabilities?.[BASE_MAINNET_ID]?.atomic?.status === 'ready' || capabilities?.[BASE_MAINNET_ID]?.atomic?.status === 'supported';
 
   const isConfirmed = isTxConfirmed || isBatchConfirmed;
-  const isProcessing = isTxPending || isBatchPending || isTxConfirming || isBatchConfirming;
+  const isProcessing = isTxPending || isBatchPending || isTxConfirming || isBatchConfirming || isSwitching;
 
   useEffect(() => {
     if (isConfirmed) {
@@ -38,6 +43,7 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
     sendTransaction({
       to: "0x0000000000000000000000000000000000008021",
       value: parseEther("0"),
+      chainId: BASE_MAINNET_ID,
       data: appendERC8021(stringToHex("INIT_RACE"), [ATTRIBUTION_CODE, BUILDER_CODE])
     });
   };
@@ -46,6 +52,7 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
     if (!address) return;
     
     sendCalls({
+      chainId: BASE_MAINNET_ID,
       calls: [
         {
           to: "0x0000000000000000000000000000000000008021",
@@ -70,9 +77,33 @@ export function Transactions({ onTxSuccess }: { onTxSuccess?: () => void }) {
   const sendGMTransaction = () => {
     sendTransaction({
       to: "0xcD0dd3716C5561De47a24949335dF8a8CD8F71a3",
+      chainId: BASE_MAINNET_ID,
       data: appendERC8021(stringToHex("gm"), [ATTRIBUTION_CODE, BUILDER_CODE])
     });
   };
+
+  if (isWrongChain) {
+    return (
+      <div className="flex flex-col items-center p-6 bg-blue-950/40 border border-blue-500/30 rounded-3xl max-w-md mx-auto text-center">
+        <Zap className="w-8 h-8 text-blue-400 mb-2 animate-bounce" />
+        <h4 className="text-base font-bold text-white mb-1">Switch to Base Denim Mainnet</h4>
+        <p className="text-xs text-white/60 mb-5 leading-relaxed">
+          Warp Racer is operating on Base Denim Mainnet with 200ms native blocks. Switch your network to continue.
+        </p>
+        <button
+          onClick={() => switchChain?.({ chainId: BASE_MAINNET_ID })}
+          disabled={isSwitching}
+          className="px-6 py-3 bg-[#0052FF] hover:bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,82,255,0.4)] disabled:opacity-50"
+        >
+          {isSwitching ? (
+            <><Loader2 className="w-4 h-4 animate-spin" /> Switching to Mainnet...</>
+          ) : (
+            <><ArrowRightLeft className="w-4 h-4" /> Switch to Base Mainnet (8453)</>
+          )}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center">

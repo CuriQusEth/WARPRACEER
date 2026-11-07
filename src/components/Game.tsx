@@ -36,6 +36,7 @@ export function Game() {
       sendTransaction({
         to: "0x0000000000000000000000000000000000008021",
         value: parseEther("0"),
+        chainId: 8453, // Base Denim Mainnet
         data: appendERC8021(stringToHex(`SUBMIT_SCORE:${score}`), [ATTRIBUTION_CODE, BUILDER_CODE])
       });
     } catch(err) {

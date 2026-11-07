@@ -4,10 +4,17 @@ import { WagmiProvider, createConfig, http } from 'wagmi';
 import { base, baseSepolia } from 'wagmi/chains';
 import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors';
 
-// Base Denim upgrade: 200ms native canonical blocks replacing Flashblocks
-const baseDenim = {
+// Base Denim Mainnet upgrade: 200ms native canonical blocks
+export const baseDenimMainnet = {
   ...base,
-  pollingInterval: 250, // Tuned for 200ms native blocks
+  name: 'Base Denim Mainnet',
+  pollingInterval: 250, // 200ms native canonical blocks
+  rpcUrls: {
+    ...base.rpcUrls,
+    default: {
+      http: ['https://mainnet.base.org'],
+    },
+  },
 };
 
 const baseSepoliaDenim = {
@@ -16,7 +23,7 @@ const baseSepoliaDenim = {
 };
 
 export const config = createConfig({
-  chains: [baseDenim, baseSepoliaDenim],
+  chains: [baseDenimMainnet, baseSepoliaDenim],
   multiInjectedProviderDiscovery: false,
   connectors: [
     injected({ target: 'metaMask' }),
@@ -24,7 +31,7 @@ export const config = createConfig({
     walletConnect({ projectId: 'YOUR_PROJECT_ID_HERE', showQrModal: true })
   ],
   transports: {
-    [baseDenim.id]: http(undefined, { batch: true }),
+    [baseDenimMainnet.id]: http('https://mainnet.base.org', { batch: true }),
     [baseSepoliaDenim.id]: http(undefined, { batch: true }),
   },
 });
